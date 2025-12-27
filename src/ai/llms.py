@@ -2,7 +2,7 @@ from langchain_openai import ChatOpenAI
 from django.conf import settings
 
 
-def get_openai_model(model="gpt-4o-mini"):
+def get_openai_model(model: str = "gpt-4o-mini") -> ChatOpenAI:
     return ChatOpenAI(
         model=model,
         temperature=0,
