@@ -1,11 +1,13 @@
+
+from asgiref.sync import async_to_sync
+from my_permit import permit_client as permit
 from directories.models import Directory
 from langchain_core.tools import tool
 from langchain_core.runnables import RunnableConfig
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.db.models import Q
-
-
+from permit import PermitApiError
 
 @tool
 def list_documents(*, config: RunnableConfig, limit: int = 10):
@@ -35,6 +37,22 @@ def list_documents(*, config: RunnableConfig, limit: int = 10):
         return {"error": "user_id must be an integer"}
 
     # -----------------------------
+    # Permission check
+    # -----------------------------
+    try:
+        has_perm = async_to_sync(permit.check)(
+            str(user_id),         # subject
+            "list_documents",       # action
+            "directory",          # resource
+)
+
+    except PermitApiError as e:
+        return {"error": f"Permit API error: {str(e)}"}
+
+    if not has_perm:
+        raise PermissionError("User does not have permission to list documents.")
+
+    # -----------------------------
     # Validate limit
     # -----------------------------
     try:
@@ -62,6 +80,7 @@ def list_documents(*, config: RunnableConfig, limit: int = 10):
 
     except Exception as e:
         return {"error": f"An unexpected error occurred: {str(e)}"}
+
 
 
 
@@ -99,6 +118,22 @@ def get_document(document_id: int, *, config: RunnableConfig):
         document_id = int(document_id)
     except (ValueError, TypeError):
         return {"error": "document_id must be an integer"}
+
+    # -----------------------------
+    # Permission check
+    # -----------------------------
+    try:
+        has_perm = async_to_sync(permit.check)(
+            str(user_id),
+            resource="directory",
+            action="get_document",  # <-- Permit action key
+            
+        )
+    except PermitApiError as e:
+        return {"error": f"Permit API error: {str(e)}"}
+
+    if not has_perm:
+        raise PermissionError("User does not have permission to view this document.")
 
     # -----------------------------
     # Fetch the document
@@ -152,6 +187,22 @@ def create_document(title: str, content: str, *, config: RunnableConfig):
         return {"error": "user_id must be an integer"}
 
     # -----------------------------
+    # Permission check
+    # -----------------------------
+    try:
+        has_perm = async_to_sync(permit.check)(
+            str(user_id),
+            resource="directory",
+            action="create_document",  # <-- Permit action key
+            
+        )
+    except PermitApiError as e:
+        return {"error": f"Permit API error: {str(e)}"}
+
+    if not has_perm:
+        raise PermissionError("User does not have permission to create a document.")
+
+    # -----------------------------
     # Validate title and content
     # -----------------------------
     if not title or not title.strip():
@@ -188,6 +239,7 @@ def create_document(title: str, content: str, *, config: RunnableConfig):
 
     except Exception as e:
         return {"error": f"An unexpected error occurred: {str(e)}"}
+
 
 
 
@@ -232,6 +284,22 @@ def update_document(document_id: int, title: str = None, content: str = None, *,
         return {"error": "At least one of 'title' or 'content' must be provided"}
 
     # -----------------------------
+    # Permission check
+    # -----------------------------
+    try:
+        has_perm = async_to_sync(permit.check)(
+            str(user_id),
+            resource="directory",
+            action="update_document",  # <-- Permit action key
+            
+        )
+    except PermitApiError as e:
+        return {"error": f"Permit API error: {str(e)}"}
+
+    if not has_perm:
+        raise PermissionError("User does not have permission to update this document.")
+
+    # -----------------------------
     # Update safely using transaction
     # -----------------------------
     try:
@@ -263,6 +331,7 @@ def update_document(document_id: int, title: str = None, content: str = None, *,
 
 
 
+
 @tool
 def delete_document(document_id: int, *, config: RunnableConfig):
     """
@@ -276,6 +345,9 @@ def delete_document(document_id: int, *, config: RunnableConfig):
         dict: Success or error message.
     """
 
+    # -----------------------------
+    # Get user_id from config
+    # -----------------------------
     configurable = config.get("configurable") or {}
     user_id = configurable.get("user_id")
 
@@ -287,12 +359,33 @@ def delete_document(document_id: int, *, config: RunnableConfig):
     except (ValueError, TypeError):
         return {"error": "user_id must be an integer"}
 
-
+    # -----------------------------
+    # Validate document_id
+    # -----------------------------
     try:
         document_id = int(document_id)
     except (ValueError, TypeError):
         return {"error": "document_id must be an integer"}
 
+    # -----------------------------
+    # Permission check
+    # -----------------------------
+    try:
+        has_perm = async_to_sync(permit.check)(
+            str(user_id),
+            resource="directory",
+            action="delete_document",  # <-- Permit action key
+            
+        )
+    except PermitApiError as e:
+        return {"error": f"Permit API error: {str(e)}"}
+
+    if not has_perm:
+        raise PermissionError("User does not have permission to delete this document.")
+
+    # -----------------------------
+    # Delete document safely
+    # -----------------------------
     try:
         with transaction.atomic():
             obj = Directory.objects.get(id=document_id, owner_id=user_id, active=True)
@@ -306,7 +399,6 @@ def delete_document(document_id: int, *, config: RunnableConfig):
         return {"error": str(e)}
 
     except Exception as e:
-        # Catch unexpected errors
         return {"error": f"An unexpected error occurred: {str(e)}"}
 
 
@@ -337,6 +429,22 @@ def delete_all_documents(*, config: RunnableConfig):
         return {"error": "user_id must be an integer"}
 
     # -----------------------------
+    # Permission check
+    # -----------------------------
+    try:
+        has_perm = async_to_sync(permit.check)(
+            str(user_id),
+            resource="directory",
+            action="delete_all_documents",  # <-- your action key
+            
+        )
+    except PermitApiError as e:
+        return {"error": f"Permit API error: {str(e)}"}
+
+    if not has_perm:
+        raise PermissionError("User does not have permission to delete all documents.")
+
+    # -----------------------------
     # Delete safely using transaction
     # -----------------------------
     try:
@@ -350,21 +458,13 @@ def delete_all_documents(*, config: RunnableConfig):
 
     except Exception as e:
         return {"error": f"An unexpected error occurred: {str(e)}"}
-    
+
 
 
 @tool
 def search_query_documents(query: str, *, config: RunnableConfig, limit: int = 10):
     """
     Search documents for the current user by a query string in title or content.
-
-    Args:
-        query (str): The search query.
-        config (RunnableConfig): Configuration containing 'user_id'.
-        limit (int): Maximum number of results to return (default 10).
-
-    Returns:
-        dict: List of matched documents or an error message.
     """
 
     # -----------------------------
@@ -381,10 +481,21 @@ def search_query_documents(query: str, *, config: RunnableConfig, limit: int = 1
     except (ValueError, TypeError):
         return {"error": "user_id must be an integer"}
 
-    lookups = {
-        "owner_id": user_id,
-        "active": True,
-    }
+    # -----------------------------
+    # Permission check
+    # -----------------------------
+    try:
+        has_perm = async_to_sync(permit.check)(
+            str(user_id),
+            resource="directory",
+            action="search_query_documents",  # <-- your action key
+            
+        )
+    except PermitApiError as e:
+        return {"error": f"Permit API error: {str(e)}"}
+
+    if not has_perm:
+        raise PermissionError("User does not have permission to search documents.")
 
     # -----------------------------
     # Validate query
@@ -405,10 +516,10 @@ def search_query_documents(query: str, *, config: RunnableConfig, limit: int = 1
         limit = 10
 
     # -----------------------------
-    # Perform search using lookups
+    # Perform search
     # -----------------------------
     try:
-        queryset = Directory.objects.filter(**lookups).filter(
+        queryset = Directory.objects.filter(active=True).filter(
             Q(title__icontains=query) | Q(content__icontains=query)
         ).order_by("-created_at")[:limit]
 
@@ -424,6 +535,7 @@ def search_query_documents(query: str, *, config: RunnableConfig, limit: int = 1
 
     except Exception as e:
         return {"error": f"An unexpected error occurred: {str(e)}"}
+
 
 
 

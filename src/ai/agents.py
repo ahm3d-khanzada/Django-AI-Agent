@@ -1,7 +1,6 @@
-from langgraph.prebuilt import create_react_agent
-from ai.llms import get_openai_model
-from ai.tools import document_tools
 from langchain.agents import create_agent
+from ai.tools.documents import document_tools
+from ai.tools.movie_discovery import movie_tools
 
 
 SYSTEM_PROMPT = """
@@ -17,15 +16,21 @@ Rules:
 """
 
 
-def get_agent(
-    model: str = "gpt-4o-mini",
-    checkpointer=None,
-):
-    llm = get_openai_model(model=model)
-
+def get_document_agent(llm, checkpointer=None):
     return create_agent(
         model=llm,
-        tools=document_tools,
-        # prompt=SYSTEM_PROMPT,
+        tools=document_tools,      # ✅ flat list
+        system_prompt=SYSTEM_PROMPT,
         checkpointer=checkpointer,
+        name="document_agent",
+    )
+
+
+def get_movie_agent(llm, checkpointer=None):
+    return create_agent(
+        model=llm,
+        tools=movie_tools,         # ✅ flat list
+        system_prompt=SYSTEM_PROMPT,
+        checkpointer=checkpointer,
+        name="movie_agent",
     )
