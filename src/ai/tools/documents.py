@@ -371,12 +371,7 @@ def delete_document(document_id: int, *, config: RunnableConfig):
     # Permission check
     # -----------------------------
     try:
-        has_perm = async_to_sync(permit.check)(
-            str(user_id),
-            resource="directory",
-            action="delete_document",  # <-- Permit action key
-            
-        )
+        has_perm = async_to_sync(permit.check)(str(user_id),resource="directory",action="delete_document")
     except PermitApiError as e:
         return {"error": f"Permit API error: {str(e)}"}
 
