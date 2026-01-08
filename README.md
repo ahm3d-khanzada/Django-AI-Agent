@@ -59,30 +59,41 @@ Permit.io
 
 ## ⚙️ Installation & Setup
 
-### 1️⃣ Clone the Repository
+### Clone the Repository
 
 ```bash
 git clone https://github.com/ahm3d-khanzada/Django-AI-Agent.git
 cd langgraph-django-permit
-
+```
+### Craete a Virual Enviorment
+```bash
 python -m venv venv
 source venv/bin/activate     # macOS / Linux
 venv\Scripts\activate        # Windows
-
+```
+### Intsall requirment.txt file
+```bash
 pip install -r requirements.txt
-
+```
+### Create .ENV 
+```bash
 DJANGO_SECRET_KEY=your-secret-key
 DEBUG=True
-
 OPENAI_API_KEY=your-openai-api-key
 
 PERMIT_API_KEY=your-permit-api-key
 PERMIT_PDP_URL=your-permit-pdp-url
 PERMIT_TENANT=default
-
+```
+### Migrate DB 
+```bash
 python manage.py migrate
-
+```
+### Create Super-user
+```bash
 python manage.py createsuperuser
-
+```
+### Run the server
+```bash
 python manage.py runserver
 ```
