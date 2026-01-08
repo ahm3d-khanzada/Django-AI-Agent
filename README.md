@@ -22,27 +22,8 @@ Unlike typical AI demos, this project focuses on:
 
 ---
 
-## ✅ What You Will Learn
-
-By completing this project, you will be able to:
-
-- Save and manage user data with **Django ORM**
-- Chat directly with Django data **without vector embeddings**
-- Convert Python functions into **LangChain tools**
-- Integrate **third-party REST APIs** into AI agents
-- Build **multi-agent systems** using LangGraph
-- Create a **Supervisor Agent** to control other agents
-- Swap LLM providers with minimal effort
-- Implement **RBAC (Role-Based Access Control)**
-- Secure AI agents with **Permit.io guardrails**
-- Restrict create, read, update, delete, search, and share actions
-- Enforce **instance-level permissions**
-- Prevent agents from performing unauthorized actions
-
----
-
 ## 🧠 System Architecture
-
+```
 User
 ↓
 Django Application
@@ -61,8 +42,7 @@ Permit.io
 ├── RBAC Policies
 ├── Resource Permissions
 ├── Instance-Level Authorization
-
-
+```
 
 ---
 
