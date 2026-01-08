@@ -62,7 +62,7 @@ Permit.io
 ### 1️⃣ Clone the Repository
 
 ```bash
-git clone https://github.com/codingforentrepreneurs/langgraph-django-permit.git
+git clone https://github.com/ahm3d-khanzada/Django-AI-Agent.git
 cd langgraph-django-permit
 
 python -m venv venv
